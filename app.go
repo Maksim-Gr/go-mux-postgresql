@@ -60,7 +60,6 @@ func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
 	if start < 0 {
 		start = 0
 	}
-
 	products, err := getProducts(a.DB, start, count)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -68,6 +67,24 @@ func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJSON(w, http.StatusOK, products)
 }
+
+func (a *App) createProduct(w http.ResponseWriter, r *http.Request) {
+	var p product
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&p); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	defer r.Body.Close()
+
+	if err := p.createProduct(a.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, p)
+}
+
+// handler to update product
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	respondWithJSON(w, code, map[string]string{"error": message})
